@@ -1,11 +1,12 @@
 from transformers import ViTImageProcessor, ViTForImageClassification, ViTConfig
 from datasets import load_dataset
+import evaluate
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 import torch
 import argparse
-
 import PIL
+
 
 # MODEL ARGUMENTS
 parser = argparse.ArgumentParser(description='Alzheimer classification.')
@@ -19,18 +20,15 @@ batch_size = args.batch_size
 
 # Load the Falah/Alzheimer_MRI dataset
 dataset = load_dataset('Falah/Alzheimer_MRI')
+metric = evaluate.load("Falah/Alzheimer_MRI")
 
 # im = dataset["train"][0]["image"]
 # print(dataset["train"][0]["label"])
 # # im = PIL.Image(dataset["train"][0]["image"])
 # # im.show()
 # import matplotlib.pyplot as plt
-
 # plt.imshow(im)
 # plt.show()
-
-# print(dataset)
-# print(dataset["train"].features)
 
 vitprocessor = ViTImageProcessor.from_pretrained('google/vit-base-patch16-224')
 #define callback to data collator
@@ -47,12 +45,15 @@ def data_collator(unprocessed_batch):
 
 processed_dataset = dataset.with_transform(transform)
 training_set = processed_dataset["train"]
+test_set = processed_dataset["test"]
 training_dataloader = DataLoader(training_set, collate_fn=data_collator, batch_size=batch_size)
+
+test_dataloader = DataLoader(test_set, collate_fn=data_collator, batch_size=batch_size)
+
 
 ## training
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-config = ViTConfig(num_channels=1)
 
 model = ViTForImageClassification.from_pretrained('google/vit-base-patch16-224', ignore_mismatched_sizes=True, num_labels=4)
 model.to(device)
@@ -63,7 +64,30 @@ model.to(device)
 for epoch in range(epochs):
     print(epoch)
     for _, batch in enumerate(training_dataloader):
-        print(batch)
+        optimizer.zero_grad()
+
+        # print(batch["labels"])
+        batch = {k:v.to(device) for k, v in batch.items()} # bring to GPU
+        
+        outputs = model(**batch)
+        loss = outputs.loss 
+        loss.backward()
+        optimizer.step()
+
+
+    for _, batch in enumerate(test_dataloader):
+        with torch.no_grad():
+            # print(batch["labels"])
+            batch = {k:v.to(device) for k, v in batch.items()} # bring to GPU
+            
+            outputs = model(**batch)
+            logits = outputs.logits
+            preds = torch.argmax(logits, dim=-1)
+            metric.add_batch(preds, references=batch["labels"])
+
+
+    print(metric.compute())
+
 
 
 
