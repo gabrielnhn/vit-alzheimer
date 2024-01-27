@@ -62,7 +62,7 @@ optimizer = Adam(model.parameters(), lr=lr)
 model.to(device)
 
 for epoch in range(epochs):
-    print(epoch)
+    print(f"epoch: {epoch}")
     model.train()
     for _, batch in enumerate(training_dataloader):
         optimizer.zero_grad()
@@ -88,9 +88,9 @@ for epoch in range(epochs):
             metric.add_batch(predictions=preds, references=batch["labels"])
 
 
-    print(metric.compute())
+    print(f"accuracy: {metric.compute()}")
 
-
+model.save_pretrained("model")
 
 
 
