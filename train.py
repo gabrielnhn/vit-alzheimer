@@ -63,6 +63,7 @@ model.to(device)
 
 for epoch in range(epochs):
     print(epoch)
+    model.train()
     for _, batch in enumerate(training_dataloader):
         optimizer.zero_grad()
 
@@ -75,6 +76,7 @@ for epoch in range(epochs):
         optimizer.step()
 
 
+    model.eval()
     for _, batch in enumerate(test_dataloader):
         with torch.no_grad():
             # print(batch["labels"])
