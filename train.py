@@ -83,7 +83,7 @@ for epoch in range(epochs):
             outputs = model(**batch)
             logits = outputs.logits
             preds = torch.argmax(logits, dim=-1)
-            metric.add_batch(preds, references=batch["labels"])
+            metric.add_batch(predictions=preds, references=batch["labels"])
 
 
     print(metric.compute())
