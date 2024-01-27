@@ -1,5 +1,5 @@
 from transformers import ViTImageProcessor, ViTForImageClassification, ViTConfig
-from datasets import load_dataset
+from datasets import load_dataset, load_metric
 import evaluate
 from torch.utils.data import DataLoader
 from torch.optim import Adam
@@ -20,7 +20,7 @@ batch_size = args.batch_size
 
 # Load the Falah/Alzheimer_MRI dataset
 dataset = load_dataset('Falah/Alzheimer_MRI')
-metric = evaluate.load("Falah/Alzheimer_MRI")
+metric = load_metric("accuracy")
 
 # im = dataset["train"][0]["image"]
 # print(dataset["train"][0]["label"])
